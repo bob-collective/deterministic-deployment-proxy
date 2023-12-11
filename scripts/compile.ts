@@ -82,13 +82,18 @@ async function writeFactoryDeployerTransaction(contract: CompilerOutputContract)
 	const to = new Uint8Array(0)
 	const value = new Uint8Array(0)
 	const data = arrayFromHexString(deploymentBytecode)
-	const v = arrayFromNumber(27)
+	const chainIdNum = 111;
+	const v = arrayFromNumber(2 * chainIdNum + 35)
 	const r = arrayFromHexString('2222222222222222222222222222222222222222222222222222222222222222')
 	const s = arrayFromHexString('2222222222222222222222222222222222222222222222222222222222222222')
 
-	const unsignedEncodedTransaction = rlpEncode([nonce, gasPrice, gasLimit, to, value, data])
+	const chainId = arrayFromNumber(chainIdNum);
+	const zero = new Uint8Array(0);
+
+	// const unsignedEncodedTransaction = rlpEncode([nonce, gasPrice, gasLimit, to, value, data])
 	const signedEncodedTransaction = rlpEncode([nonce, gasPrice, gasLimit, to, value, data, v, r, s])
-	const hashedSignedEncodedTransaction = new Uint8Array(keccak256.arrayBuffer(unsignedEncodedTransaction))
+	const eip155unsignedEncodedTransaction = rlpEncode([nonce, gasPrice, gasLimit, to, value, data, chainId, zero, zero])
+	const hashedSignedEncodedTransaction = new Uint8Array(keccak256.arrayBuffer(eip155unsignedEncodedTransaction))
 	const signerAddress = arrayFromHexString(keccak256(secp256k1.recoverPubKey(hashedSignedEncodedTransaction, { r: r, s: s}, 0).encode('array').slice(1)).slice(-40))
 	const contractAddress = arrayFromHexString(keccak256(rlpEncode([signerAddress, nonce])).slice(-40))
 
